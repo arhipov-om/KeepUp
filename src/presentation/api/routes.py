@@ -1,6 +1,7 @@
 # src/presentation/api/routes.py
-from fastapi import APIRouter, HTTPException, Depends
-from dishka.integrations.fastapi import FromDishka
+from dishka.integrations.fastapi import FromDishka, DishkaRoute
+from fastapi import APIRouter, HTTPException
+
 from src.application.use_cases.domain_use_cases import (
     AddDomainUseCase,
     GetDomainHealthUseCase,
@@ -9,18 +10,16 @@ from src.application.use_cases.domain_use_cases import (
 from src.presentation.api.schemas import (
     AddDomainRequest,
     DomainResponse,
-    HealthCheckResponse,
-    DomainHealthResponse,
-    ErrorResponse
+    HealthCheckResponse
 )
 
-router = APIRouter(prefix="/api", tags=["domains"])
+router = APIRouter(prefix="/api", tags=["domains"], route_class=DishkaRoute)
 
 
 @router.post("/domains", response_model=DomainResponse, status_code=201)
 async def add_domain(
-    request: AddDomainRequest,
-    use_case: FromDishka[AddDomainUseCase]
+        request: AddDomainRequest,
+        use_case: FromDishka[AddDomainUseCase]
 ):
     """Добавить новый домен для мониторинга"""
     try:
@@ -36,7 +35,7 @@ async def add_domain(
 
 @router.get("/domains", response_model=list[DomainResponse])
 async def get_all_domains(
-    use_case: FromDishka[GetAllDomainsUseCase]
+        use_case: FromDishka[GetAllDomainsUseCase]
 ):
     """Получить список всех отслеживаемых доменов"""
     domains = await use_case.execute()
@@ -52,9 +51,9 @@ async def get_all_domains(
 
 @router.get("/domains/{domain_id}/health", response_model=list[HealthCheckResponse])
 async def get_domain_health(
-    domain_id: int,
-    hours: int = 24,
-    use_case: FromDishka[GetDomainHealthUseCase]
+        domain_id: int,
+        use_case: FromDishka[GetDomainHealthUseCase],
+        hours: int = 24,
 ):
     """Получить историю проверок домена за последние N часов"""
     try:

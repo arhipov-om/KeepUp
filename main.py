@@ -30,6 +30,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    await app.state.dishka_container.close()
     # Останавливаем планировщик
     await scheduler.stop()
     await engine.dispose()
