@@ -1,19 +1,22 @@
 # main.py
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+
+import uvicorn
 from dishka import make_async_container
 from dishka.integrations.fastapi import setup_dishka
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import create_async_engine
-from src.infrastructure.database.models import Base
-from src.infrastructure.di.container import (
+
+from keep_up.infrastructure.database.sql.models import Base
+from keep_up.infrastructure.di import (
     DatabaseProvider,
     RepositoryProvider,
     UseCaseProvider,
     ServiceProvider
 )
-from src.infrastructure.scheduler.background_tasks import BackgroundScheduler
-from src.presentation.api.routes import router
+from keep_up.infrastructure.scheduler.background_tasks import BackgroundScheduler
+from keep_up.presentation.api.routes import router
 
 
 @asynccontextmanager
@@ -72,6 +75,4 @@ def create_app() -> FastAPI:
 app = create_app()
 
 if __name__ == "__main__":
-    import uvicorn
-
     uvicorn.run(app, host="0.0.0.0", port=8000)

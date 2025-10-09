@@ -1,10 +1,12 @@
 # src/application/services/health_checker.py
 import asyncio
-import aiohttp
 from datetime import datetime
 from typing import Optional
-from src.domain.entities.domain import Domain, HealthCheck
-from src.domain.repositories.domain_repository import DomainRepository, HealthCheckRepository
+
+import aiohttp
+
+from keep_up.domain.entities.domain import Domain, HealthCheck
+from keep_up.domain.repositories.domain_repository import DomainRepository, HealthCheckRepository
 
 
 class HealthCheckerService:
@@ -20,7 +22,7 @@ class HealthCheckerService:
 
     async def check_domain(self, domain: Domain) -> HealthCheck:
         """Проверить один домен"""
-        start_time = datetime.utcnow()
+        start_time = datetime.now()
         status_code: Optional[int] = None
         error_message: Optional[str] = None
 
@@ -39,7 +41,7 @@ class HealthCheckerService:
         except Exception as e:
             error_message = f"Unexpected error: {str(e)}"
 
-        end_time = datetime.utcnow()
+        end_time = datetime.now()
         response_time = (end_time - start_time).total_seconds() * 1000
 
         health_check = HealthCheck(
@@ -47,7 +49,7 @@ class HealthCheckerService:
             domain_id=domain.id,
             status_code=status_code,
             response_time=response_time,
-            checked_at=datetime.utcnow(),
+            checked_at=datetime.now(),
             error_message=error_message
         )
 

@@ -1,11 +1,13 @@
 # src/infrastructure/database/repositories.py
 from datetime import datetime
 from typing import List, Optional
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.domain.entities.domain import Domain, HealthCheck
-from src.domain.repositories.domain_repository import DomainRepository, HealthCheckRepository
-from src.infrastructure.database.models import DomainModel, HealthCheckModel
+
+from keep_up.domain.entities.domain import Domain, HealthCheck
+from keep_up.domain.repositories.domain_repository import DomainRepository, HealthCheckRepository
+from keep_up.infrastructure.database.sql.models import DomainModel, HealthCheckModel
 
 
 class SQLAlchemyDomainRepository(DomainRepository):

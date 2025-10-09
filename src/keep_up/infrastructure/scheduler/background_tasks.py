@@ -1,8 +1,10 @@
 # src/infrastructure/scheduler/background_tasks.py
 import asyncio
 from contextlib import asynccontextmanager
+
 from dishka import AsyncContainer
-from src.application.services.health_checker import HealthCheckerService
+
+from keep_up.application.services.health_checker import HealthCheckerService
 
 
 class BackgroundScheduler:

@@ -11,3 +11,6 @@ dependencies = [
     "sqlalchemy>=2.0.43",
     "uvicorn[standard]>=0.37.0",
 ]
+
+[mypy]
+mypy_path = "src"

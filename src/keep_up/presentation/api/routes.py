@@ -2,12 +2,12 @@
 from dishka.integrations.fastapi import FromDishka, DishkaRoute
 from fastapi import APIRouter, HTTPException
 
-from src.application.use_cases.domain_use_cases import (
+from keep_up.application.use_cases.domain_use_cases import (
     AddDomainUseCase,
     GetDomainHealthUseCase,
     GetAllDomainsUseCase
 )
-from src.presentation.api.schemas import (
+from keep_up.presentation.api.schemas import (
     AddDomainRequest,
     DomainResponse,
     HealthCheckResponse

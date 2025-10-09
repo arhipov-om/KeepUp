@@ -1,7 +1,8 @@
 # src/presentation/api/schemas.py
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, HttpUrl
+
+from pydantic import BaseModel
 
 
 class AddDomainRequest(BaseModel):

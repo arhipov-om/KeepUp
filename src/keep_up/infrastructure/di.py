@@ -3,10 +3,13 @@ from typing import AsyncIterable
 
 from dishka import Provider, Scope, provide
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from src.domain.repositories.domain_repository import DomainRepository, HealthCheckRepository
-from src.infrastructure.database.repositories import SQLAlchemyDomainRepository, SQLAlchemyHealthCheckRepository
-from src.application.use_cases.domain_use_cases import AddDomainUseCase, GetDomainHealthUseCase, GetAllDomainsUseCase
-from src.application.services.health_checker import HealthCheckerService
+
+from keep_up.application.services.health_checker import HealthCheckerService
+from keep_up.application.use_cases.domain_use_cases import (AddDomainUseCase,
+                                                            GetDomainHealthUseCase,
+                                                            GetAllDomainsUseCase)
+from keep_up.domain.repositories.domain_repository import DomainRepository, HealthCheckRepository
+from keep_up.infrastructure.database.sql.repositories import SQLAlchemyDomainRepository, SQLAlchemyHealthCheckRepository
 
 
 class DatabaseProvider(Provider):

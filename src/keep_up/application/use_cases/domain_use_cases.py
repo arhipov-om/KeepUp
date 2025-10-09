@@ -1,8 +1,9 @@
 # src/application/use_cases/domain_use_cases.py
 from datetime import datetime, timedelta
 from typing import List
-from src.domain.entities.domain import Domain, HealthCheck
-from src.domain.repositories.domain_repository import DomainRepository, HealthCheckRepository
+
+from keep_up.domain.entities.domain import Domain, HealthCheck
+from keep_up.domain.repositories.domain_repository import DomainRepository, HealthCheckRepository
 
 
 class AddDomainUseCase:
@@ -20,7 +21,7 @@ class AddDomainUseCase:
         domain = Domain(
             id=None,
             url=url,
-            created_at=datetime.utcnow()
+            created_at=datetime.now()
         )
 
         return await self.domain_repo.add(domain)
@@ -42,7 +43,7 @@ class GetDomainHealthUseCase:
         if not domain:
             raise ValueError(f"Domain with id {domain_id} not found")
 
-        since = datetime.utcnow() - timedelta(hours=hours)
+        since = datetime.now() - timedelta(hours=hours)
         return await self.health_repo.get_by_domain(domain_id, since)
 
 
