@@ -1,0 +1,36 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    hostname: rabbitmq
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: "guest"
+      RABBITMQ_DEFAULT_PASS: "guest"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
+  pg:
+    image: postgres:17.4-bookworm
+
+    environment:
+      PGPORT: ${DB_PORT}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  pgdata:
+  rabbitmq-data:

@@ -4,10 +4,13 @@ from datetime import datetime
 from typing import Optional
 
 import aiohttp
+import httpx
+from httpx import AsyncClient
 
 from keep_up.domain.entities.domain import Domain, HealthCheck
 from keep_up.domain.repositories.domain_repository import DomainRepository, HealthCheckRepository
 
+session = AsyncClient()
 
 class HealthCheckerService:
     """Сервис для проверки доступности доменов"""
@@ -27,16 +30,15 @@ class HealthCheckerService:
         error_message: Optional[str] = None
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
+            response = await session.get(
                         domain.url,
-                        timeout=aiohttp.ClientTimeout(total=10),
-                        allow_redirects=True
-                ) as response:
-                    status_code = response.status
-        except aiohttp.ClientError as e:
+                        timeout=10,
+                        follow_redirects=True
+                )
+            status_code = response.status_code
+        except httpx.ReadError as e:
             error_message = str(e)
-        except asyncio.TimeoutError:
+        except httpx.TimeoutException:
             error_message = "Request timeout"
         except Exception as e:
             error_message = f"Unexpected error: {str(e)}"
@@ -54,10 +56,3 @@ class HealthCheckerService:
         )
 
         return await self.health_repo.add(health_check)
-
-    async def check_all_domains(self):
-        """Проверить все домены"""
-        domains = await self.domain_repo.get_all()
-
-        tasks = [self.check_domain(domain) for domain in domains]
-        await asyncio.gather(*tasks, return_exceptions=True)

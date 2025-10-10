@@ -1,7 +1,8 @@
 # src/infrastructure/di/container.py
 from typing import AsyncIterable
 
-from dishka import Provider, Scope, provide
+from dishka import Provider, Scope, provide, from_context
+from environs import Env
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
 from keep_up.application.services.health_checker import HealthCheckerService
@@ -9,16 +10,24 @@ from keep_up.application.use_cases.domain_use_cases import (AddDomainUseCase,
                                                             GetDomainHealthUseCase,
                                                             GetAllDomainsUseCase)
 from keep_up.domain.repositories.domain_repository import DomainRepository, HealthCheckRepository
+from keep_up.infrastructure.config import get_config, Config
 from keep_up.infrastructure.database.sql.repositories import SQLAlchemyDomainRepository, SQLAlchemyHealthCheckRepository
 
 
 class DatabaseProvider(Provider):
     """Provider для работы с базой данных"""
+    scope = Scope.APP
+
+    env = from_context(provides=Env)
 
     @provide(scope=Scope.APP)
-    def get_engine(self) -> create_async_engine:
+    def get_config(self, env: Env) -> Config:
+        return get_config(env=env)
+
+    @provide(scope=Scope.APP)
+    def get_engine(self, config: Config) -> create_async_engine:
         return create_async_engine(
-            "sqlite+aiosqlite:///./domain_monitor.db",
+            config.db.url_with_driver.unicode_string(),
             echo=False
         )
 
