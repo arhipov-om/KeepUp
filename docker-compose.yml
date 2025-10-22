@@ -14,13 +14,12 @@ services:
 
   pg:
     image: postgres:17.4-bookworm
-
     environment:
       PGPORT: ${DB_PORT}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
-      PGDATA: /var/lib/postgresql/data/pgdata
+      PGDATA: /var/lib/postgresql/data
     ports:
       - "${DB_PORT}:${DB_PORT}"
     volumes:

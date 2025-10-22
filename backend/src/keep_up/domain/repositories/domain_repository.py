@@ -1,7 +1,6 @@
-# src/domain/repositories/domain_repository.py
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import List, Optional
+from uuid import UUID
 
 from keep_up.domain.entities.domain import Domain, HealthCheck
 
@@ -14,15 +13,19 @@ class DomainRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_id(self, domain_id: int) -> Optional[Domain]:
+    async def get_by_uuid(self, domain_uuid: UUID) -> Domain | None:
         pass
 
     @abstractmethod
-    async def get_by_url(self, url: str) -> Optional[Domain]:
+    async def get_by_url(self, url: str) -> Domain | None:
         pass
 
     @abstractmethod
-    async def get_all(self) -> List[Domain]:
+    async def get_by_url_uuid_qc(self, url: str, user_uuid: UUID) -> Domain | None:
+        pass
+
+    @abstractmethod
+    async def get_all(self) -> list[Domain]:
         pass
 
 
@@ -35,12 +38,12 @@ class HealthCheckRepository(ABC):
 
     @abstractmethod
     async def get_by_domain(
-            self,
-            domain_id: int,
-            since: datetime
-    ) -> List[HealthCheck]:
+        self,
+        domain_uuid: UUID,
+        since: datetime,
+    ) -> list[HealthCheck]:
         pass
 
     @abstractmethod
-    async def get_latest_by_domain(self, domain_id: int) -> Optional[HealthCheck]:
+    async def get_latest_by_domain(self, domain_uuid: UUID) -> HealthCheck | None:
         pass

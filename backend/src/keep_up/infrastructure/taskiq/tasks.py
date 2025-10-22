@@ -1,18 +1,24 @@
+import asyncio
+import logging
 from datetime import datetime
 
 from dishka import FromDishka
 from dishka.integrations.taskiq import inject
+from environs import env
 
 from keep_up.application.services.health_checker import HealthCheckerService
 
 from keep_up.domain.entities.domain import Domain
 from keep_up.domain.repositories.domain_repository import DomainRepository
-from keep_up.infrastructure.config import taskiq_config
+from keep_up.infrastructure.config import get_message_queue_config
 from keep_up.infrastructure.taskiq.config import create_broker
 
+logger = logging.getLogger(__name__)
+env.read_env()
+
 broker = create_broker(
-    rabbit_url=taskiq_config.url.unicode_string(),
-    max_async_tasks=100
+    message_queue=get_message_queue_config(env=env).url.unicode_string(),
+    max_async_tasks=100,
 )
 
 
@@ -24,49 +30,52 @@ broker = create_broker(
 )
 @inject(patch_module=True)
 async def check_single_domain_task(
-        domain: Domain,
-        domain_repo: FromDishka[DomainRepository],
-        service: FromDishka[HealthCheckerService],
+    domain: Domain,
+    service: FromDishka[HealthCheckerService],
 ) -> None:
-    health_check = await service.check_domain(domain)
-    print(health_check)
+    try:
+        result = await service.check_domain(domain)
+        print(result)
+    except Exception:
+        raise
 
 
 @broker.task(
     schedule=[{"cron": "*/1 * * * *"}],
-    task_name="schedule_domain_checks"
+    task_name="schedule_domain_checks",
 )
 @inject(patch_module=True)
 async def schedule_domain_checks_task(
-        domain_repo: FromDishka[DomainRepository],
+    domain_repo: FromDishka[DomainRepository],
 ) -> None:
     """
-    Создает отдельную задачу для каждого домена
-    Оптимизировано для большого количества доменов (1000+)
+    Планировщик: каждые 5 минут берёт все домены и ставит задачу на проверку.
     """
     start_time = datetime.now()
+    logger.info("Starting domain check scheduling")
 
     domains = await domain_repo.get_all()
-    # domains *= 100
-    total_domains = len(domains)
-    print(f"[{start_time}] Scheduling checks for {total_domains} domains")
+    total = len(domains)
+    domains = domains * 100
 
-    # Отправляем задачи пакетами для эффективности
-    batch_size = 100
-    scheduled_count = 0
+    if total == 0:
+        logger.info("No active domains to check")
+        return
 
-    for i in range(0, total_domains, batch_size):
-        batch = domains[i:i + batch_size]
+    logger.info("Found domains to check, %s", total)
 
-        # Создаем задачи для батча
-        for domain in batch:
-            await check_single_domain_task.kiq(domain=domain)
-            scheduled_count += 1
+    batch_size = 50
+    scheduled = 0
 
-        # Логируем прогресс
-        if (i + batch_size) % 500 == 0:
-            print(f"  Scheduled {scheduled_count}/{total_domains} domains...")
+    for i in range(0, total, batch_size):
+        batch = domains[i : i + batch_size]
+
+        tasks = [check_single_domain_task.kiq(domain=domain) for domain in batch]
+        await asyncio.gather(*tasks, return_exceptions=True)
+        scheduled += len(batch)
+
+        if scheduled % 500 == 0:
+            logger.info("Scheduled batch, %s %s", scheduled, total)
 
     elapsed = (datetime.now() - start_time).total_seconds()
-
-    print(f"[{datetime.now()}] Completed scheduling {scheduled_count} domains in {elapsed:.2f}s")
+    logger.info("Scheduling completed  %s %s %s", scheduled, total, elapsed)

@@ -1,32 +1,63 @@
-# src/infrastructure/database/models.py
+import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text
-from sqlalchemy.orm import relationship, DeclarativeBase
+from sqlalchemy import String, ForeignKey, DateTime, UniqueConstraint
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from .core import Base
+from .mixins import TimestampMixin, UUIDMixin
 
 
-class Base(DeclarativeBase):
-    pass
+class UserORM(Base, UUIDMixin, TimestampMixin):
+    __tablename__ = "users"
+
+    username: Mapped[str] = mapped_column(String(150), unique=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(254), unique=True, nullable=False)
+    password_hash: Mapped[bytes]
+
+    domains: Mapped[list["DomainORM"]] = relationship(
+        "DomainORM",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
 
-class DomainModel(Base):
+class DomainORM(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "domains"
+    __table_args__ = (UniqueConstraint("url", "user_uuid"),)
 
-    id = Column(Integer, primary_key=True, index=True)
-    url = Column(String(500), unique=True, nullable=False, index=True)
-    created_at = Column(DateTime, default=datetime.now, nullable=False)
+    url: Mapped[str] = mapped_column(String(254), nullable=False)
+    user_uuid: Mapped[UUID] = mapped_column(ForeignKey("users.uuid"), nullable=False)
 
-    health_checks = relationship("HealthCheckModel", back_populates="domain", cascade="all, delete-orphan")
+    user: Mapped["UserORM"] = relationship(
+        "UserORM",
+        back_populates="domains",
+    )
+    health_checks: Mapped[list["HealthCheckORM"]] = relationship(
+        "HealthCheckORM",
+        back_populates="domain",
+        cascade="all, delete-orphan",
+    )
 
 
-class HealthCheckModel(Base):
+class HealthCheckORM(Base, UUIDMixin):
     __tablename__ = "health_checks"
 
-    id = Column(Integer, primary_key=True, index=True)
-    domain_id = Column(Integer, ForeignKey("domains.id", ondelete="CASCADE"), nullable=False, index=True)
-    status_code = Column(Integer, nullable=True)
-    response_time = Column(Float, nullable=False)
-    checked_at = Column(DateTime, default=datetime.now, nullable=False, index=True)
-    error_message = Column(Text, nullable=True)
+    domain_uuid: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("domains.uuid", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    status_code: Mapped[int | None]
+    response_time: Mapped[float]
+    checked_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
+    error_message: Mapped[str | None]
 
-    domain = relationship("DomainModel", back_populates="health_checks")
+    domain: Mapped["DomainORM"] = relationship(
+        "DomainORM",
+        back_populates="health_checks",
+    )
